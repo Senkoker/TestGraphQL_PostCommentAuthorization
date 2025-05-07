@@ -1,0 +1,18 @@
+extend type CommentMutation {
+    create (
+        input: NewComment!
+    ): CommentCreateResult! @goField(forceResolver: true)
+}
+
+input NewComment {
+    replyTo: String!
+    authorID: String!
+    content: String!
+}
+
+type CommentOK {
+    commentID: String!
+}
+
+union CommentCreateResult = InternalErrorProblem | CommentOK
+

@@ -3,13 +3,26 @@
 # https://gqlgen.com/getting-started/
 
 type Post {
-    id: ID!
+    postID: ID!
+    imgPersonUrl: String!
+    Author: String!
     authorID: String!
     tagIDS: [String]
     content: String!
     createdAt: String
     watched: Int
     likes: Int
+    comments(limit: Int, offset: Int):[Comment] @goField(forceResolver: true)
+}
+
+type Comment {
+    commentID: ID!
+    authorID: String!
+    authorName: String!
+    authorImgUrl: String!
+    content: String!
+    createdAt: String!
+    commentChild(limit: Int , offset: Int):[Comment] @goField(forceResolver: true)
 }
 
 type User {
@@ -23,14 +36,10 @@ type User {
     country: String
     city: String
     friendIDs: [String]
-    postIDs: [String]
     subscribesIDs: [String]
     friends(limit: Int, offset: Int): [User]
     subscribes(limit: Int, offset: Int): [User]
     posts(limit: Int, offset: Int): [Post]
 }
 
-type Query {
-    User(userID: ID!): User
-}
 

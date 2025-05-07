@@ -1,0 +1,10 @@
+type Mutation
+type CommentMutation
+type PostMutation
+extend type Mutation {
+    comment: CommentMutation
+}
+
+extend type Mutation {
+    post: PostMutation
+}

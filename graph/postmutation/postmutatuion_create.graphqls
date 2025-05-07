@@ -1,0 +1,22 @@
+extend type PostMutation {
+    create(
+        input: NewPost!
+    ): PostCreateResult! @goField(forceResolver: true)
+}
+
+input NewPost {
+    hashtags: String!
+    content: String!
+    file: Upload!
+    createdAt: String!
+}
+
+type PostCreateOK {
+    articleID: String!
+}
+
+union PostCreateResult =
+    | InternalErrorProblem
+    | PostCreateOK
+
+scalar Upload

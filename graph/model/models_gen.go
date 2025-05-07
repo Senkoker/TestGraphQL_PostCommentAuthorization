@@ -2,14 +2,102 @@
 
 package model
 
+import (
+	"github.com/99designs/gqlgen/graphql"
+)
+
+type PostCreateResult interface {
+	IsPostCreateResult()
+}
+
+type PostDataResult interface {
+	IsPostDataResult()
+}
+
+type ProblemInterface interface {
+	IsProblemInterface()
+	GetMessage() string
+}
+
+type UserFindResult interface {
+	IsUserFindResult()
+}
+
+type Comment struct {
+	CommentID    string     `json:"commentID"`
+	AuthorID     string     `json:"authorID"`
+	AuthorName   string     `json:"authorName"`
+	AuthorImgURL string     `json:"authorImgUrl"`
+	Content      string     `json:"content"`
+	CreatedAt    string     `json:"createdAt"`
+	CommentChild []*Comment `json:"commentChild,omitempty"`
+}
+
+type InternalErrorProblem struct {
+	Message string `json:"message"`
+}
+
+func (InternalErrorProblem) IsProblemInterface()     {}
+func (this InternalErrorProblem) GetMessage() string { return this.Message }
+
+func (InternalErrorProblem) IsPostCreateResult() {}
+
+func (InternalErrorProblem) IsPostDataResult() {}
+
+func (InternalErrorProblem) IsUserFindResult() {}
+
+type Mutation struct {
+}
+
+type NewPost struct {
+	Hashtags  string         `json:"hashtags"`
+	Content   string         `json:"content"`
+	File      graphql.Upload `json:"file"`
+	CreatedAt string         `json:"createdAt"`
+}
+
 type Post struct {
-	ID        string    `json:"id"`
-	AuthorID  string    `json:"authorID"`
-	TagIDS    []*string `json:"tagIDS,omitempty"`
-	Content   string    `json:"content"`
-	CreatedAt *string   `json:"createdAt,omitempty"`
-	Watched   *int32    `json:"watched,omitempty"`
-	Likes     *int32    `json:"likes,omitempty"`
+	PostID       string     `json:"postID"`
+	ImgPersonURL string     `json:"imgPersonUrl"`
+	Author       string     `json:"Author"`
+	AuthorID     string     `json:"authorID"`
+	TagIDS       []*string  `json:"tagIDS,omitempty"`
+	Content      string     `json:"content"`
+	CreatedAt    *string    `json:"createdAt,omitempty"`
+	Watched      *int32     `json:"watched,omitempty"`
+	Likes        *int32     `json:"likes,omitempty"`
+	Comments     []*Comment `json:"comments,omitempty"`
+}
+
+type PostCreateOk struct {
+	ArticleID string `json:"articleID"`
+}
+
+func (PostCreateOk) IsPostCreateResult() {}
+
+type PostFilter struct {
+	Limit  int32              `json:"limit"`
+	Offset int32              `json:"offset"`
+	Data   *PostIDHashtagData `json:"data"`
+}
+
+type PostFindOk struct {
+	Posts []*Post `json:"posts,omitempty"`
+}
+
+func (PostFindOk) IsPostDataResult() {}
+
+type PostIDHashtagData struct {
+	Hashtags *string   `json:"hashtags,omitempty"`
+	ID       []*string `json:"id,omitempty"`
+}
+
+type PostMutation struct {
+	Create PostCreateResult `json:"create"`
+}
+
+type PostQuery struct {
+	Find PostDataResult `json:"find"`
 }
 
 type Query struct {
@@ -26,9 +114,22 @@ type User struct {
 	Country       *string   `json:"country,omitempty"`
 	City          *string   `json:"city,omitempty"`
 	FriendIDs     []*string `json:"friendIDs,omitempty"`
-	PostIDs       []*string `json:"postIDs,omitempty"`
 	SubscribesIDs []*string `json:"subscribesIDs,omitempty"`
 	Friends       []*User   `json:"friends,omitempty"`
 	Subscribes    []*User   `json:"subscribes,omitempty"`
 	Posts         []*Post   `json:"posts,omitempty"`
+}
+
+type UserFind struct {
+	Find UserFindResult `json:"find"`
+}
+
+type UserFindOk struct {
+	User *User `json:"user"`
+}
+
+func (UserFindOk) IsUserFindResult() {}
+
+type UserID struct {
+	Userid string `json:"userid"`
 }

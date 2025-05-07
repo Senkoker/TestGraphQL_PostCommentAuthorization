@@ -6,172 +6,43 @@ package graph
 
 import (
 	"context"
-	"database/sql"
+	"fmt"
 	"friend_graphql/graph/model"
-	"log"
-	"strings"
 )
 
-func splitString(s string) []*string {
-	postIDs := strings.Split(s[1:len(s)-1], ",")
-	postIDSpointer := make([]*string, len(postIDs), len(postIDs))
-	for i := 0; i < len(postIDs); i++ {
-		postIDSpointer[i] = &postIDs[i]
-	}
-	return postIDSpointer
+// CommentChild is the resolver for the commentChild field.
+func (r *commentResolver) CommentChild(ctx context.Context, obj *model.Comment, limit *int32, offset *int32) ([]*model.Comment, error) {
+	panic(fmt.Errorf("not implemented: CommentChild - commentChild"))
 }
 
-func GetFriendSubscribers(ctx context.Context, user *model.User, db *sql.DB) error {
-	rows, err := db.QueryContext(ctx, `SELECT friend_id,status FROM user_friends where user_id=$1`, user.ID)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	subscribesIDS := []*string{}
-	friendsIDs := []*string{}
-	for rows.Next() {
-		var friendID string
-		var status bool
-		err = rows.Scan(&friendID, &status)
-		if err != nil {
-			log.Println(err.Error())
-			continue
-		}
-		if status {
-			friendsIDs = append(friendsIDs, &friendID)
-		} else {
-			subscribesIDS = append(subscribesIDS, &friendID)
-		}
-	}
-	user.FriendIDs = friendsIDs
-	user.SubscribesIDs = subscribesIDS
-	return nil
-}
-
-func GetUsers(obj *model.User, db *sql.DB, ctx context.Context, limit, offset *int32, friend bool) ([]*model.User, error) {
-	var friendIDs []*string
-	var imagesStr string
-	if friend {
-		friendIDs = obj.FriendIDs
-	} else {
-		friendIDs = obj.SubscribesIDs
-	}
-	var postsStr string
-	result, err := db.QueryContext(ctx, `SELECT user_id,first_name,second_name,img_url,images,birth_date,
-       education,country,city,PostIDs FROM users_info where user_id= ANY($1) LIMIT $2 OFFSET $3`, friendIDs, limit, offset)
-	if err != nil {
-		return nil, err
-	}
-
-	users := make([]*model.User, 0, len(friendIDs))
-	for result.Next() {
-		user := new(model.User)
-		err = result.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.MainImgURL, &imagesStr,
-			&user.BirthDate, &user.Education, &user.Country, &user.City, &postsStr)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		imagePointer := splitString(imagesStr)
-		postIDSpointer := splitString(postsStr)
-		user.Images = imagePointer
-		user.PostIDs = postIDSpointer
-
-		err = GetFriendSubscribers(ctx, user, db)
-		if err != nil {
-			log.Println(err.Error())
-		}
-	}
-	return users, nil
-}
-
-// User is the resolver for the User field.
-func (r *queryResolver) User(ctx context.Context, limit *int32, offset *int32, userID string) (*model.User, error) {
-	user := new(model.User)
-	var postsStr string
-	var imagesStr string
-	err := r.DB.QueryRowContext(ctx, `SELECT user_id,first_name,second_name,img_url,images,birth_date,
-       education,country,city,postIDs FROM users_info where user_id=$1`, userID).Scan(&user.ID, &user.FirstName, &user.SecondName, &user.MainImgURL,
-		&imagesStr, &user.BirthDate, &user.Education, &user.Country, &user.City, &postsStr)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	postIDSpointer := splitString(postsStr)
-	imagePointer := splitString(imagesStr)
-	user.PostIDs = postIDSpointer
-	user.Images = imagePointer
-
-	rows, err := r.DB.QueryContext(ctx, `SELECT friend_id,status FROM user_friends where user_id=$1`, userID)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	subscribesIDS := []*string{}
-	friendsIDs := []*string{}
-	for rows.Next() {
-		var friendID string
-		var status bool
-		err = rows.Scan(&friendID, &status)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		if status {
-			friendsIDs = append(friendsIDs, &friendID)
-		} else {
-			subscribesIDS = append(subscribesIDS, &friendID)
-		}
-	}
-	user.FriendIDs = friendsIDs
-	user.SubscribesIDs = subscribesIDS
-	return user, nil
+// Comments is the resolver for the comments field.
+func (r *postResolver) Comments(ctx context.Context, obj *model.Post, limit *int32, offset *int32) ([]*model.Comment, error) {
+	panic(fmt.Errorf("not implemented: Comments - comments"))
 }
 
 // Friends is the resolver for the friends field.
 func (r *userResolver) Friends(ctx context.Context, obj *model.User, limit *int32, offset *int32) ([]*model.User, error) {
-	users, err := GetUsers(obj, r.DB, ctx, limit, offset, true)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	return users, nil
+	panic(fmt.Errorf("not implemented: Friends - friends"))
 }
 
 // Subscribes is the resolver for the subscribes field.
 func (r *userResolver) Subscribes(ctx context.Context, obj *model.User, limit *int32, offset *int32) ([]*model.User, error) {
-	users, err := GetUsers(obj, r.DB, ctx, limit, offset, false)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-	return users, nil
+	panic(fmt.Errorf("not implemented: Subscribes - subscribes"))
 }
 
 // Posts is the resolver for the posts field.
 func (r *userResolver) Posts(ctx context.Context, obj *model.User, limit *int32, offset *int32) ([]*model.Post, error) {
-	postIDs := obj.PostIDs
-	posts := make([]*model.Post, 0, len(postIDs))
-	var tagsStr string
-	rows, err := r.DB.QueryContext(ctx, `SELECT id,author_id,tag_ids,content,created_at,watched,likes 
-	FROM posts WHERE id = ANY ($1) LIMIT $2 OFFSET $3`, postIDs, limit, offset)
-	if err != nil {
-		log.Println(err.Error())
-		return nil, err
-	}
-	for rows.Next() {
-		post := new(model.Post)
-		err = rows.Scan(&post.ID, &post.AuthorID, &tagsStr, &post.Content, &post.CreatedAt, &post.Watched, &post.Likes)
-		if err != nil {
-			log.Println(err.Error())
-			continue
-		}
-		tagIDS := splitString(tagsStr)
-		post.TagIDS = tagIDS
-		posts = append(posts, post)
-	}
-	return posts, nil
+	panic(fmt.Errorf("not implemented: Posts - posts"))
 }
+
+// Comment returns CommentResolver implementation.
+func (r *Resolver) Comment() CommentResolver { return &commentResolver{r} }
+
+// Mutation returns MutationResolver implementation.
+func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
+
+// Post returns PostResolver implementation.
+func (r *Resolver) Post() PostResolver { return &postResolver{r} }
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
@@ -179,5 +50,8 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 // User returns UserResolver implementation.
 func (r *Resolver) User() UserResolver { return &userResolver{r} }
 
+type commentResolver struct{ *Resolver }
+type mutationResolver struct{ *Resolver }
+type postResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type userResolver struct{ *Resolver }
