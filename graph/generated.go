@@ -614,7 +614,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 	return introspection.WrapTypeFromDef(ec.Schema(), ec.Schema().Types[name]), nil
 }
 
-//go:embed "directives/directives.graphqls" "errors/problem.graphqls" "mainschemas/schema.graphqls" "postmutation/postmutatuion_create.graphqls" "postquery/postquery_find.graphqls" "userquery/userquery_find.graphqls"
+//go:embed "directives/directives.graphqls" "errors/problem.graphqls" "mainschemas/schema.graphqls" "post/postmutatuion_create.graphqls" "post/postquery_find.graphqls" "user/userquery_find.graphqls"
 var sourcesFS embed.FS
 
 func sourceData(filename string) string {

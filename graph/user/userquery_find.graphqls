@@ -1,4 +1,4 @@
-type UserFind {
+extend type UserFind {
     find(
         input:UserID
     ): UserFindResult! @goField(forceResolver: true)
@@ -11,7 +11,3 @@ type UserFindOK{
     user: User!
 }
 union UserFindResult = UserFindOK | InternalErrorProblem
-
-extend type Query {
-    user: UserFind
-}
