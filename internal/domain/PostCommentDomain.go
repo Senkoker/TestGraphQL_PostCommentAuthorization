@@ -1,13 +1,18 @@
 package domain
 
 import (
+	"encoding/json"
+	"fmt"
 	"friend_graphql/graph/model"
 	"friend_graphql/internal/logger"
+	"github.com/99designs/gqlgen/graphql"
 )
 
 type Domain struct {
 	StorageRedis    StorageRedisInterface
 	StoragePostgres StoragePostgresInterface
+	Producer        ProducerKafkaInterface
+	amazonS3        AmazonS3Interface
 }
 
 type StorageRedisInterface interface {
@@ -15,13 +20,58 @@ type StorageRedisInterface interface {
 	GetPostHash(postIds []string) ([]model.Post, []string, error)
 	CreatePopularPostHash(posts []model.Post) error
 }
+type AmazonS3Interface interface {
+	UploadFile(file graphql.Upload) (string, error)
+}
+type ProducerKafkaInterface interface {
+	Produce(msg []byte) error
+}
 
 type StoragePostgresInterface interface {
 	GetUserInfo(users []string) (map[string]model.UserInfo, error)
 }
 
-func NewPostCommentDomain(storage StorageRedisInterface) *Domain {
-	return &Domain{StorageRedis: storage}
+func NewPostCommentDomain(storageRedis StorageRedisInterface, storagePostgres StoragePostgresInterface) *Domain {
+	return &Domain{StorageRedis: storageRedis, StoragePostgres: storagePostgres}
+}
+
+func (d *Domain) UploadPostKafka(input *model.NewPost, userID string) (string, error) {
+	op := "uploadPostKafka"
+	loggerUpload := logger.GetLogger().With(op)
+	imgUrl, err := d.amazonS3.UploadFile(input.File)
+	if err != nil {
+		loggerUpload.Error("Error uploading file", "err", err)
+	}
+	input.AuthorID = userID
+	input.ImgUrl = imgUrl
+	postMsgKafka, err := json.Marshal(input)
+	if err != nil {
+		loggerUpload.Error("Error marshalling post json", "err", err)
+		return "", fmt.Errorf("error marshalling post json: %v", err)
+	}
+	err = d.Producer.Produce(postMsgKafka)
+	if err != nil {
+		loggerUpload.Error("problem sent file to broker", "err", err)
+		return "", fmt.Errorf("problem sent file to broker:%v", err)
+	}
+	return "OK", nil
+}
+
+func (d *Domain) UploadCommentKafka(input *model.NewComment, userID string) (string, error) {
+	op := "uploadCommentKafka"
+	loggerUpload := logger.GetLogger().With(op)
+	input.AuthorID = userID
+	postMsgKafka, err := json.Marshal(input)
+	if err != nil {
+		loggerUpload.Error("Error marshalling post json", "err", err)
+		return "", fmt.Errorf("error marshalling post json: %v", err)
+	}
+	err = d.Producer.Produce(postMsgKafka)
+	if err != nil {
+		loggerUpload.Error("problem sent file to broker", "err", err)
+		return "", fmt.Errorf("problem sent file to broker:%v", err)
+	}
+	return "OK", nil
 }
 
 func (d *Domain) FeedGetPosts(interestPostIds []string) ([]model.Post, error) {

@@ -19,4 +19,4 @@ type PostFindOK {
     posts:[Post]
 }
 
-union PostDataResult = InternalErrorProblem | PostFindOK
+union PostDataResult = InternalErrorProblem | PostFindOK | UnauthorizedError

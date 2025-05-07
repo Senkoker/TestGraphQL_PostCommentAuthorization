@@ -1,4 +1,4 @@
-package graph
+package runtime
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
 // will be copied through when generating and any unknown code will be moved to the end.
@@ -6,12 +6,18 @@ package graph
 
 import (
 	"context"
+	"fmt"
 	"friend_graphql/graph/model"
 )
 
 // Post is the resolver for the post field.
 func (r *queryResolver) Post(ctx context.Context) (*model.PostQuery, error) {
-	return &model.PostQuery{}, nil
+	panic(fmt.Errorf("not implemented: Post - post"))
+}
+
+// User is the resolver for the user field.
+func (r *queryResolver) User(ctx context.Context) (*model.UserFind, error) {
+	panic(fmt.Errorf("not implemented: User - user"))
 }
 
 // PostQuery returns PostQueryResolver implementation.
@@ -20,5 +26,9 @@ func (r *Resolver) PostQuery() PostQueryResolver { return &postQueryResolver{r} 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
+// UserFind returns UserFindResolver implementation.
+func (r *Resolver) UserFind() UserFindResolver { return &userFindResolver{r} }
+
 type postQueryResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type userFindResolver struct{ *Resolver }

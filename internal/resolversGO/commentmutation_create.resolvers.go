@@ -1,4 +1,4 @@
-package graph
+package runtime
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
 // will be copied through when generating and any unknown code will be moved to the end.
@@ -6,16 +6,19 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"friend_graphql/graph/model"
+	"friend_graphql/internal/server"
 )
 
 // Create is the resolver for the create field.
 func (r *commentMutationResolver) Create(ctx context.Context, obj *model.CommentMutation, input model.NewComment) (model.CommentCreateResult, error) {
-	panic(fmt.Errorf("not implemented: Create - create"))
+	userID, err := server.AuthorizationCheck(ctx)
+	if err != nil {
+		return model.UnauthorizedError{Message: err.Error()}, nil
+	}
+	result, err := r.PostCommentDomain.UploadCommentKafka(&input, userID)
+	if err != nil {
+		return model.UnauthorizedError{Message: err.Error()}, nil
+	}
+	return model.CommentOk{CommentID: result}, nil
 }
-
-// CommentMutation returns CommentMutationResolver implementation.
-func (r *Resolver) CommentMutation() CommentMutationResolver { return &commentMutationResolver{r} }
-
-type commentMutationResolver struct{ *Resolver }

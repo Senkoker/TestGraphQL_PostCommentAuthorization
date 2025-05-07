@@ -1,4 +1,4 @@
-package graph
+package runtime
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
 // will be copied through when generating and any unknown code will be moved to the end.
@@ -6,21 +6,15 @@ package graph
 
 import (
 	"context"
-	"fmt"
 	"friend_graphql/graph/model"
+	"friend_graphql/internal/server"
 )
 
 // Find is the resolver for the find field.
 func (r *postQueryResolver) Find(ctx context.Context, obj *model.PostQuery, filter *model.PostFilter) (model.PostDataResult, error) {
-	panic(fmt.Errorf("not implemented: Find - find"))
+	_, err := server.AuthorizationCheck(ctx)
+	if err != nil {
+		return model.UnauthorizedError{Message: err.Error()}, nil
+	}
+	
 }
-
-// Post is the resolver for the post field.
-func (r *queryResolver) Post(ctx context.Context) (*model.PostQuery, error) {
-	return &model.PostQuery{}, nil
-}
-
-// PostQuery returns PostQueryResolver implementation.
-func (r *Resolver) PostQuery() PostQueryResolver { return &postQueryResolver{r} }
-
-type postQueryResolver struct{ *Resolver }

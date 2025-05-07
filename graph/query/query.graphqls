@@ -3,4 +3,5 @@ type PostQuery
 type UserFind
 extend type Query {
     post: PostQuery!
+    user: UserFind!
 }

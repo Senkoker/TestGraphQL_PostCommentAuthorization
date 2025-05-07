@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"net/http"
@@ -28,4 +29,11 @@ func AuthorizationMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 		c.Request().WithContext(ctx)
 		return next(c)
 	}
+}
+func AuthorizationCheck(ctx context.Context) (string, error) {
+	userID, ok := ctx.Value("userID").(string)
+	if !ok {
+		return "", errors.New("Unauthorized")
+	}
+	return userID, nil
 }

@@ -6,6 +6,10 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 )
 
+type CommentCreateResult interface {
+	IsCommentCreateResult()
+}
+
 type PostCreateResult interface {
 	IsPostCreateResult()
 }
@@ -33,9 +37,21 @@ type Comment struct {
 	CommentChild []*Comment `json:"commentChild,omitempty"`
 }
 
+type CommentMutation struct {
+	Create CommentCreateResult `json:"create"`
+}
+
+type CommentOk struct {
+	CommentID string `json:"commentID"`
+}
+
+func (CommentOk) IsCommentCreateResult() {}
+
 type InternalErrorProblem struct {
 	Message string `json:"message"`
 }
+
+func (InternalErrorProblem) IsCommentCreateResult() {}
 
 func (InternalErrorProblem) IsProblemInterface()     {}
 func (this InternalErrorProblem) GetMessage() string { return this.Message }
@@ -49,7 +65,15 @@ func (InternalErrorProblem) IsUserFindResult() {}
 type Mutation struct {
 }
 
+type NewComment struct {
+	ReplyTo  string `json:"replyTo"`
+	AuthorID string `json:"authorID"`
+	Content  string `json:"content"`
+}
+
 type NewPost struct {
+	AuthorID 	string `json:"authorID"`
+	ImgUrl string `json:"imgUrl"`
 	Hashtags  string         `json:"hashtags"`
 	Content   string         `json:"content"`
 	File      graphql.Upload `json:"file"`
@@ -103,33 +127,19 @@ type PostQuery struct {
 type Query struct {
 }
 
-type User struct {
-	ID            string    `json:"id"`
-	FirstName     string    `json:"firstName"`
-	SecondName    string    `json:"secondName"`
-	MainImgURL    string    `json:"mainImgUrl"`
-	Images        []*string `json:"images,omitempty"`
-	BirthDate     *string   `json:"birthDate,omitempty"`
-	Education     *string   `json:"education,omitempty"`
-	Country       *string   `json:"country,omitempty"`
-	City          *string   `json:"city,omitempty"`
-	FriendIDs     []*string `json:"friendIDs,omitempty"`
-	SubscribesIDs []*string `json:"subscribesIDs,omitempty"`
-	Friends       []*User   `json:"friends,omitempty"`
-	Subscribes    []*User   `json:"subscribes,omitempty"`
-	Posts         []*Post   `json:"posts,omitempty"`
+type UnauthorizedError struct {
+	Message string `json:"message"`
 }
 
-type UserFind struct {
-	Find UserFindResult `json:"find"`
-}
+func (UnauthorizedError) IsCommentCreateResult() {}
 
-type UserFindOk struct {
-	User *User `json:"user"`
-}
+func (UnauthorizedError) IsProblemInterface()     {}
+func (this UnauthorizedError) GetMessage() string { return this.Message }
 
-func (UserFindOk) IsUserFindResult() {}
+func (UnauthorizedError) IsPostCreateResult() {}
 
-type UserID struct {
-	Userid string `json:"userid"`
-}
+func (UnauthorizedError) IsPostDataResult() {}
+
+func (UnauthorizedError) IsUserFindResult() {}
+
+

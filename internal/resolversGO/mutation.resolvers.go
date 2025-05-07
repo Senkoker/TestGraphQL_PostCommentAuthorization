@@ -1,4 +1,4 @@
-package graph
+package runtime
 
 // This file will be automatically regenerated based on the schema, any resolver implementations
 // will be copied through when generating and any unknown code will be moved to the end.
@@ -17,10 +17,18 @@ func (r *mutationResolver) Comment(ctx context.Context) (*model.CommentMutation,
 
 // Post is the resolver for the post field.
 func (r *mutationResolver) Post(ctx context.Context) (*model.PostMutation, error) {
-	return &model.PostMutation{}, nil
+	panic(fmt.Errorf("not implemented: Post - post"))
 }
+
+// CommentMutation returns CommentMutationResolver implementation.
+func (r *Resolver) CommentMutation() CommentMutationResolver { return &commentMutationResolver{r} }
 
 // Mutation returns MutationResolver implementation.
 func (r *Resolver) Mutation() MutationResolver { return &mutationResolver{r} }
 
+// PostMutation returns PostMutationResolver implementation.
+func (r *Resolver) PostMutation() PostMutationResolver { return &postMutationResolver{r} }
+
+type commentMutationResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
+type postMutationResolver struct{ *Resolver }

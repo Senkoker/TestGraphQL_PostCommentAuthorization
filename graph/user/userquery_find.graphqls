@@ -10,4 +10,4 @@ input UserID {
 type UserFindOK{
     user: User!
 }
-union UserFindResult = UserFindOK | InternalErrorProblem
+union UserFindResult = UserFindOK | InternalErrorProblem | UnauthorizedError

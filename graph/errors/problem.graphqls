@@ -4,3 +4,6 @@ interface ProblemInterface {
 type InternalErrorProblem implements ProblemInterface{
     message: String!
 }
+type UnauthorizedError implements ProblemInterface{
+    message: String!
+}

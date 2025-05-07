@@ -14,5 +14,5 @@ type CommentOK {
     commentID: String!
 }
 
-union CommentCreateResult = InternalErrorProblem | CommentOK
+union CommentCreateResult = InternalErrorProblem | UnauthorizedError |CommentOK
 
