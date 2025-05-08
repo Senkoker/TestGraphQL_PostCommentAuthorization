@@ -8,7 +8,6 @@ import (
 	"friend_graphql/internal/logger"
 	"friend_graphql/pkg/DBRedis"
 	"github.com/redis/go-redis/v9"
-	"strconv"
 	"time"
 )
 
@@ -21,7 +20,7 @@ func NewRedisHandler(storage *DBRedis.RedisStorage, ctxTime time.Duration) *Hand
 	return &HandlerRedis{storage: storage, ctxTime: ctxTime}
 }
 
-func (r *HandlerRedis) GetPostHashtagHash(hashtags []string, limit, offset string) ([]model.Post, error) {
+func (r *HandlerRedis) GetPostHashtagHash(hashtags []string, limit, offset int32) ([]*model.Post, error) {
 	var allQuery string
 	for i, hashtag := range hashtags {
 		text := fmt.Sprintf("@tags_ids:{%s}", hashtag)
@@ -41,12 +40,11 @@ func (r *HandlerRedis) GetPostHashtagHash(hashtags []string, limit, offset strin
 	if err != nil {
 		return nil, fmt.Errorf("Problem to return data from redis:%v", err)
 	}
-	massive, _ := strconv.Atoi(limit)
-	posts := make([]model.Post, 0, massive)
-	var post model.Post
+	posts := make([]*model.Post, 0, limit)
 	result := res.([]interface{})
 	for i := 1; i < len(result); i++ {
 		if i%2 == 0 {
+			post := new(model.Post)
 			postString := result[i].([]interface{})[1].(string)
 			err = json.Unmarshal([]byte(postString), &post)
 			if err != nil {
@@ -58,11 +56,11 @@ func (r *HandlerRedis) GetPostHashtagHash(hashtags []string, limit, offset strin
 	return posts, nil
 }
 
-func (r *HandlerRedis) GetPostHash(postIds []string) ([]model.Post, []string, error) {
+func (r *HandlerRedis) GetPostHash(postIds []string) ([]*model.Post, []string, error) {
 	ctx := context.Background()
 	pipe := r.storage.RStorage.Pipeline()
 	cmds := make([]*redis.Cmd, len(postIds))
-	posts := make([]model.Post, 0, len(postIds))
+	posts := make([]*model.Post, 0, len(postIds))
 	existPostIds := make([]string, 0, len(postIds))
 	for i := 0; i < len(postIds); i++ {
 		cmds[i] = pipe.Do(ctx, "JSON.GET", fmt.Sprintf("Post_id:%s", postIds[i]))
@@ -80,18 +78,18 @@ func (r *HandlerRedis) GetPostHash(postIds []string) ([]model.Post, []string, er
 			logger.GetLogger().Error("Problem to Json.Get", "err", err)
 			continue
 		}
-		var post model.Post
+		post := new(model.Post)
 		err = json.Unmarshal([]byte(data.(string)), &post)
 		if err != nil {
 			continue
 		}
-		existPostIds = append(existPostIds, post.ID)
+		existPostIds = append(existPostIds, post.PostID)
 		posts = append(posts, post)
 	}
 	fmt.Println(existPostIds, "найденные id")
 	return posts, existPostIds, nil
 }
-func (r *HandlerRedis) CreatePopularPostHash(posts []model.Post) error {
+func (r *HandlerRedis) CreatePopularPostHash(posts []*model.Post) error {
 	pipe := r.storage.RStorage.Pipeline()
 	for _, post := range posts {
 		jsonPost, err := json.Marshal(post)

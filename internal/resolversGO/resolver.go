@@ -8,7 +8,8 @@ import "friend_graphql/graph/model"
 type PostCommentDomainInterface interface {
 	UploadPostKafka(input *model.NewPost, userID string) (string, error)
 	UploadCommentKafka(input *model.NewComment, userID string) (string, error)
-	FindPost(hashtags string, postIDS []string) (*model.Post, error)
+	FeedGetPosts(interestPostIds []string) ([]*model.Post, error)
+	FeedGetPostsWithHashtag(hashtags []string, limit, offset int32, redisStatus string) ([]*model.Post, error)
 }
 
 type Resolver struct {

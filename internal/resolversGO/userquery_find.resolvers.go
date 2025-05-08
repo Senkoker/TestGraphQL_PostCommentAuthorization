@@ -6,11 +6,16 @@ package runtime
 
 import (
 	"context"
-	"fmt"
 	"friend_graphql/graph/model"
+	"friend_graphql/internal/server"
 )
 
 // Find is the resolver for the find field.
 func (r *userFindResolver) Find(ctx context.Context, obj *model.UserFind, input *model.UserID) (model.UserFindResult, error) {
-	panic(fmt.Errorf("not implemented: Find - find"))
+	userID, err := server.AuthorizationCheck(ctx)
+	if err != nil {
+		return model.UnauthorizedError{Message: err.Error()}, nil
+	}
+	
+	return model.UserFindOk{}, nil
 }

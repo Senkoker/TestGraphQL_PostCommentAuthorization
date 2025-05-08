@@ -72,6 +72,7 @@ type NewComment struct {
 }
 
 type NewPost struct {
+	PostID string `json:"postID"`
 	AuthorID 	string `json:"authorID"`
 	ImgUrl string `json:"imgUrl"`
 	Hashtags  string         `json:"hashtags"`
@@ -81,7 +82,7 @@ type NewPost struct {
 }
 
 type Post struct {
-	PostID       string     `json:"postID"`
+	PostID       string     `json:"postID" bson:"_id"`
 	ImgPersonURL string     `json:"imgPersonUrl"`
 	Author       string     `json:"Author"`
 	AuthorID     string     `json:"authorID"`

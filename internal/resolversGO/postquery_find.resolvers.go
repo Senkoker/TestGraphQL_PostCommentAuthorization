@@ -6,9 +6,19 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"friend_graphql/graph/model"
 	"friend_graphql/internal/server"
+	"strings"
 )
+
+func PointerConvert(slicerPointer []*string) []string {
+	postID := make([]string, 0, len(slicerPointer))
+	for _, id := range slicerPointer {
+		postID = append(postID, *id)
+	}
+	return postID
+}
 
 // Find is the resolver for the find field.
 func (r *postQueryResolver) Find(ctx context.Context, obj *model.PostQuery, filter *model.PostFilter) (model.PostDataResult, error) {
@@ -16,5 +26,14 @@ func (r *postQueryResolver) Find(ctx context.Context, obj *model.PostQuery, filt
 	if err != nil {
 		return model.UnauthorizedError{Message: err.Error()}, nil
 	}
-	
+	postID := PointerConvert(filter.Data.ID)
+	fmt.Println(postID)
+	hashtags := strings.Split(*filter.Data.Hashtags, "#")
+	//Todo: дописать директиву чтобы можно было доставать данные
+	//posts,err:=r.PostCommentDomain.FeedGetPosts(postID)
+	//if err!=nil{
+	//	return model.InternalErrorProblem{Message: err.Error()}, nil
+	//}
+	posts, err := r.PostCommentDomain.FeedGetPostsWithHashtag(hashtags, filter.Limit, filter.Offset, "")
+	return model.PostFindOk{Posts: posts}, nil
 }
