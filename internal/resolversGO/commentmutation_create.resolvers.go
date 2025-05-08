@@ -16,7 +16,7 @@ func (r *commentMutationResolver) Create(ctx context.Context, obj *model.Comment
 	if err != nil {
 		return model.UnauthorizedError{Message: err.Error()}, nil
 	}
-	result, err := r.PostCommentDomain.UploadCommentKafka(&input, userID)
+	result, err := r.PostDomain.UploadCommentKafka(&input, userID)
 	if err != nil {
 		return model.UnauthorizedError{Message: err.Error()}, nil
 	}

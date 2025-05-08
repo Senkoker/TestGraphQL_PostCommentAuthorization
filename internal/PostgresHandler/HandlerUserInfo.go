@@ -61,7 +61,7 @@ func (s *StorageHandler) GetUserInfo(users []string) (map[string]model.UserInfo,
 	return usersInfo, nil
 }
 
-func (s *StorageHandler) GetUserInfoById(userID string, ctx context.Context) (*model.User, error) {
+func (s *StorageHandler) StorageGetUserInfoById(userID string, ctx context.Context) (*model.User, error) {
 	user := new(model.User)
 	var imagesStr string
 	err := s.storage.Db.QueryRowContext(ctx, `SELECT user_id,first_name,second_name,img_url,images,birth_date,
@@ -75,7 +75,7 @@ func (s *StorageHandler) GetUserInfoById(userID string, ctx context.Context) (*m
 	user.Images = imagePointer
 	return user, nil
 }
-func (s *StorageHandler) GetUserFriend(user *model.User, ctx context.Context) error {
+func (s *StorageHandler) StorageGetUserFriendIDs(user *model.User, ctx context.Context) error {
 	rows, err := s.storage.Db.QueryContext(ctx, `SELECT friend_id,status FROM user_friends where user_id=$1`, user.ID)
 	if err != nil {
 		return err
@@ -99,4 +99,35 @@ func (s *StorageHandler) GetUserFriend(user *model.User, ctx context.Context) er
 	user.FriendIDs = friendsIDs
 	user.SubscribesIDs = subscribesIDS
 	return nil
+}
+
+func (s *StorageHandler) StorageGetUserFriendsAndSubscribers(userObj *model.User, ctx context.Context,
+	limit, offset int32, friendStatus bool) ([]*model.User, error) {
+	var friendIDs []*string
+	var imagesStr string
+	if friendStatus {
+		friendIDs = userObj.FriendIDs
+	} else {
+		friendIDs = userObj.SubscribesIDs
+	}
+	result, err := s.storage.Db.QueryContext(ctx, `SELECT user_id,first_name,second_name,img_url,images,birth_date,
+       education,country,city FROM users_info where user_id= ANY($1) LIMIT $2 OFFSET $3`, friendIDs, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	users := make([]*model.User, 0, len(friendIDs))
+	for result.Next() {
+		user := new(model.User)
+		err = result.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.MainImgURL, &imagesStr,
+			&user.BirthDate, &user.Education, &user.Country, &user.City)
+		if err != nil {
+			logger.GetLogger().Error("Failed to scan rows GetUserFriendsAndSubscribers")
+			continue
+		}
+		imagePointer := splitString(imagesStr)
+		user.Images = imagePointer
+		users = append(users, user)
+	}
+	return users, nil
 }

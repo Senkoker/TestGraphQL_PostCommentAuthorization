@@ -16,6 +16,9 @@ func (r *userFindResolver) Find(ctx context.Context, obj *model.UserFind, input 
 	if err != nil {
 		return model.UnauthorizedError{Message: err.Error()}, nil
 	}
-	
-	return model.UserFindOk{}, nil
+	user, err := r.UserDomain.GetUserInfo(userID)
+	if err != nil {
+		return model.InternalErrorProblem{Message: err.Error()}, nil
+	}
+	return model.UserFindOk{User: user}, nil
 }

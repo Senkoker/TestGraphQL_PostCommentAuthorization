@@ -34,6 +34,6 @@ func (r *postQueryResolver) Find(ctx context.Context, obj *model.PostQuery, filt
 	//if err!=nil{
 	//	return model.InternalErrorProblem{Message: err.Error()}, nil
 	//}
-	posts, err := r.PostCommentDomain.FeedGetPostsWithHashtag(hashtags, filter.Limit, filter.Offset, "")
+	posts, err := r.PostDomain.FeedGetPostsWithHashtag(hashtags, filter.Limit, filter.Offset, "")
 	return model.PostFindOk{Posts: posts}, nil
 }

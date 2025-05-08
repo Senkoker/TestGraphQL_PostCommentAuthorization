@@ -39,7 +39,7 @@ type StoragePostgresInterface interface {
 	GetUserInfo(users []string) (map[string]model.UserInfo, error)
 }
 
-func NewPostCommentDomain(storageRedis StorageRedisInterface, storagePostgres StoragePostgresInterface) *Domain {
+func NewPostDomain(storageRedis StorageRedisInterface, storagePostgres StoragePostgresInterface) *Domain {
 	return &Domain{StorageRedis: storageRedis, StoragePostgres: storagePostgres}
 }
 

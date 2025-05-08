@@ -6,33 +6,51 @@ package runtime
 
 import (
 	"context"
-	"fmt"
 	"friend_graphql/graph/model"
 )
 
 // CommentChild is the resolver for the commentChild field.
 func (r *commentResolver) CommentChild(ctx context.Context, obj *model.Comment, limit *int32, offset *int32) ([]*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: CommentChild - commentChild"))
+	commentID := obj.CommentID
+	comments, err := r.CommentDomain.GetComment(commentID, *limit, *offset)
+	if err != nil {
+		return nil, err
+	}
+	return comments, nil
 }
 
 // Comments is the resolver for the comments field.
 func (r *postResolver) Comments(ctx context.Context, obj *model.Post, limit *int32, offset *int32) ([]*model.Comment, error) {
-	panic(fmt.Errorf("not implemented: Comments - comments"))
+	//Todo: подумать о проверке авторизации
+	postID := obj.PostID
+	comments, err := r.CommentDomain.GetComment(postID, *limit, *offset)
+	if err != nil {
+		return nil, err
+	}
+	return comments, nil
 }
 
 // Friends is the resolver for the friends field.
 func (r *userResolver) Friends(ctx context.Context, obj *model.User, limit *int32, offset *int32) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Friends - friends"))
+	friends, err := r.UserDomain.GetUserFriendSubscriber(obj, ctx, *limit, *offset, true)
+	if err != nil {
+		return nil, err
+	}
+	return friends, nil
 }
 
 // Subscribes is the resolver for the subscribes field.
 func (r *userResolver) Subscribes(ctx context.Context, obj *model.User, limit *int32, offset *int32) ([]*model.User, error) {
-	panic(fmt.Errorf("not implemented: Subscribes - subscribes"))
+	subscribers, err := r.UserDomain.GetUserFriendSubscriber(obj, ctx, *limit, *offset, true)
+	if err != nil {
+		return nil, err
+	}
+	return subscribers, nil
 }
 
 // Posts is the resolver for the posts field.
 func (r *userResolver) Posts(ctx context.Context, obj *model.User, limit *int32, offset *int32) ([]*model.Post, error) {
-	panic(fmt.Errorf("not implemented: Posts - posts"))
+	//Todo: по id user
 }
 
 // Comment returns CommentResolver implementation.
