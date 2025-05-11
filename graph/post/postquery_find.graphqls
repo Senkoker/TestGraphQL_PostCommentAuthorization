@@ -1,22 +1,28 @@
 extend type PostQuery {
-    find(
-        filter:PostFilter
-    ):PostDataResult! @goField(forceResolver: true)
+  find(filter: PostFilter): PostDataResult! @goField(forceResolver: true)
 }
 
-input PostFilter{
-    limit: Int!
-    offset: Int!
-    data: PostIDHashtagData! @inputUnion
-
+input PostFilter {
+  limit: Int!
+  offset: Int!
+  data: PostIDHashtagData! @inputUnion
 }
+
 input PostIDHashtagData {
-    hashtags: String
-    id:[String]
+  hashtags: PostHashtagData
+  id: PostIDData
+}
+
+input PostHashtagData {
+  value: String!
+}
+
+input PostIDData {
+  value: [String]!
 }
 
 type PostFindOK {
-    posts:[Post]
+  posts: [Post]
 }
 
 union PostDataResult = InternalErrorProblem | PostFindOK | UnauthorizedError

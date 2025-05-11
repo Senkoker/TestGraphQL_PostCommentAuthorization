@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"friend_graphql/internal/logger"
 	"io"
@@ -38,19 +37,15 @@ func AuthorizationMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 
 func RequestMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		body, err := io.ReadAll(c.Request().Body)
-		if err != nil {
+		buff := make([]byte, 1024) // Создаем буфер размером 1024 байта
+		n, err := c.Request().Body.Read(buff)
+		if err != nil && err != io.EOF {
 			logger.GetLogger().Error(err.Error())
-			return err
 		}
-
-		if len(body) > 0 {
-			logger.GetLogger().Info(string(body))
+		if n > 0 {
+			logger.GetLogger().Info(string(buff[:n]))
 		}
-
-		// Восстанавливаем тело запроса
-		c.Request().Body = io.NopCloser(bytes.NewBuffer(body))
-
 		return next(c)
+
 	}
 }

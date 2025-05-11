@@ -28,7 +28,6 @@ func NewServer() *Server {
 func (s *Server) QraphQLHandle(postDomain runtime.PostDomainInterface, commentDomain runtime.CommentDomainInterface,
 	userDomain runtime.UserDomainInterface) {
 	s.router.Use(middleware.RequestID())
-	s.router.Use(RequestMiddleware)
 	s.router.Use(middleware.Logger())
 	config := runtime.Config{Resolvers: &runtime.Resolver{PostDomain: postDomain,
 		CommentDomain: commentDomain, UserDomain: userDomain}}
