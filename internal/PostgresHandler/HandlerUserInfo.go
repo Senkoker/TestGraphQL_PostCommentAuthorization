@@ -9,7 +9,6 @@ import (
 	Postgres "friend_graphql/pkg/Posgres"
 	"log"
 	"strings"
-	"time"
 )
 
 func splitString(s string) []*string {
@@ -27,11 +26,10 @@ type Handler struct {
 
 type StorageHandler struct {
 	storage *Postgres.Storage
-	ctxTime time.Duration
 }
 
-func NewStorageHandler(storage *Postgres.Storage, ctxTime time.Duration) *StorageHandler {
-	return &StorageHandler{storage: storage, ctxTime: ctxTime}
+func NewStorageHandler(storage *Postgres.Storage) *StorageHandler {
+	return &StorageHandler{storage: storage}
 }
 func (s *StorageHandler) GetUserInfo(users []string) (map[string]model.UserInfo, error) {
 	stmt, err := s.storage.Db.Prepare(getUserInfo)

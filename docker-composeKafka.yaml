@@ -78,7 +78,20 @@ services:
       - kafka3
     networks:
       - kafka-net
+  mongo:
+    container_name: mongoDB
+    image: mongo
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: 12345
 
+  redisSearch:
+    container_name: redis
+    image: redislabs/redisearch
+    ports:
+      - 6379:6379
 networks:
   kafka-net:
     driver: bridge

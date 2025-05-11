@@ -6,18 +6,17 @@ package runtime
 
 import (
 	"context"
-	"fmt"
 	"friend_graphql/graph/model"
 )
 
 // Post is the resolver for the post field.
 func (r *queryResolver) Post(ctx context.Context) (*model.PostQuery, error) {
-	panic(fmt.Errorf("not implemented: Post - post"))
+	return &model.PostQuery{}, nil
 }
 
 // User is the resolver for the user field.
 func (r *queryResolver) User(ctx context.Context) (*model.UserFind, error) {
-	panic(fmt.Errorf("not implemented: User - user"))
+	return &model.UserFind{}, nil
 }
 
 // PostQuery returns PostQueryResolver implementation.

@@ -8,6 +8,7 @@ import (
 	"friend_graphql/internal/logger"
 	"friend_graphql/pkg/DBRedis"
 	"github.com/redis/go-redis/v9"
+	"strings"
 	"time"
 )
 
@@ -16,11 +17,12 @@ type HandlerRedis struct {
 	ctxTime time.Duration
 }
 
-func NewRedisHandler(storage *DBRedis.RedisStorage, ctxTime time.Duration) *HandlerRedis {
-	return &HandlerRedis{storage: storage, ctxTime: ctxTime}
+func NewRedisHandler(storage *DBRedis.RedisStorage) *HandlerRedis {
+	return &HandlerRedis{storage: storage}
 }
 
-func (r *HandlerRedis) GetPostHashtagHash(hashtags []string, limit, offset int32) ([]*model.Post, error) {
+func (r *HandlerRedis) GetPostHashtagHash(hashtagsPointer *string, limit, offset *int32) ([]*model.Post, error) {
+	hashtags := strings.Split(*hashtagsPointer, "#")
 	var allQuery string
 	for i, hashtag := range hashtags {
 		text := fmt.Sprintf("@tags_ids:{%s}", hashtag)
@@ -35,12 +37,12 @@ func (r *HandlerRedis) GetPostHashtagHash(hashtags []string, limit, offset int32
 		"FT.SEARCH",
 		"Post_index",
 		allQuery,
-		"LIMIT", offset, limit,
+		"LIMIT", *offset, *limit,
 	).Result()
 	if err != nil {
 		return nil, fmt.Errorf("Problem to return data from redis:%v", err)
 	}
-	posts := make([]*model.Post, 0, limit)
+	posts := make([]*model.Post, 0, *limit)
 	result := res.([]interface{})
 	for i := 1; i < len(result); i++ {
 		if i%2 == 0 {

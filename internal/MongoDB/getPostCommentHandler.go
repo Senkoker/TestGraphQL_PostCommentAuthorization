@@ -7,6 +7,7 @@ import (
 	"friend_graphql/pkg/MongoDB"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"strings"
 )
 
 type PostCommentHandler struct {
@@ -16,13 +17,14 @@ type PostCommentHandler struct {
 func NewPostCommentHandler(client *MongoDB.ClientMongo) *PostCommentHandler {
 	return &PostCommentHandler{storage: client}
 }
-func (h *PostCommentHandler) StorageGetPostWithHashtag(hashtags []string, limit, offset int32) ([]*model.Post, []string, error) {
-	posts := make([]*model.Post, 0, limit)
-	users := make([]string, 0, limit)
+func (h *PostCommentHandler) StorageGetPostWithHashtag(hashtagsPointer *string, limit, offset *int32) ([]*model.Post, []string, error) {
+	hashtags := strings.Split(*hashtagsPointer, "#")
+	posts := make([]*model.Post, 0, *limit)
+	users := make([]string, 0, *limit)
 	ctx := context.Background()
 	findOptions := options.Find()
-	findOptions.SetSkip(int64(offset))
-	findOptions.SetLimit(int64(limit))
+	findOptions.SetSkip(int64(*offset))
+	findOptions.SetLimit(int64(*limit))
 	findOptions.SetSort(bson.D{{"likes", 1}})
 	cursor, err := h.storage.Client.Find(ctx, bson.M{"TagIDS": bson.M{"$all": hashtags}}, findOptions)
 	defer cursor.Close(ctx)
@@ -84,4 +86,26 @@ func (h *PostCommentHandler) StorageGetComment(replyToID string, limit, offset i
 		comments = append(comments, comment)
 	}
 	return comments, nil
+}
+
+func (h *PostCommentHandler) StorageGetUserPosts(ctx context.Context, userID string, limit, offset int32) ([]*model.Post, error) {
+	findOprtions := options.Find()
+	findOprtions.SetSkip(int64(offset))
+	findOprtions.SetLimit(int64(limit))
+	cursor, err := h.storage.Client.Find(ctx, bson.M{"authorid": userID}, findOprtions)
+	defer cursor.Close(ctx)
+	if err != nil {
+		return nil, err
+	}
+	posts := []*model.Post{}
+	for cursor.Next(ctx) {
+		post := new(model.Post)
+		err = cursor.Decode(post)
+		if err != nil {
+			logger.GetLogger().Error("cursor decode error ", "StorageGetUserPosts error", err.Error())
+			continue
+		}
+		posts = append(posts, post)
+	}
+	return posts, nil
 }

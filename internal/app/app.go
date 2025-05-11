@@ -1,10 +1,17 @@
 package app
 
 import (
+	MongoDB2 "friend_graphql/internal/MongoDB"
+	"friend_graphql/internal/PostgresHandler"
 	producer "friend_graphql/internal/ProducerKafka"
+	"friend_graphql/internal/Redis/RedisHandler"
 	"friend_graphql/internal/config"
+	"friend_graphql/internal/domain"
 	"friend_graphql/internal/logger"
 	"friend_graphql/internal/server"
+	"friend_graphql/pkg/DBRedis"
+	"friend_graphql/pkg/MongoDB"
+	Postgres "friend_graphql/pkg/Posgres"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,9 +20,24 @@ import (
 func App() {
 	cfg := config.NewConfig()
 	logger.LoggerInit(cfg.Logger.Debug)
+	logger.GetLogger().Info("Config Message", *cfg)
+
+	postgreStorage := Postgres.NewStorage(cfg.Postgres.Url)
+	postgresHandler := PostgresHandler.NewStorageHandler(postgreStorage)
+
+	rediStorage := DBRedis.NewRedis(cfg)
+	redisHandler := RedisHandler.NewRedisHandler(rediStorage)
+
+	mongoDBStorage := MongoDB.NewClientMongo(cfg)
+	mongoHandler := MongoDB2.NewPostCommentHandler(mongoDBStorage)
+
 	producerKafka := producer.NewProducer(cfg)
+
+	postDomain := domain.NewPostDomain(redisHandler, postgresHandler)
+	commentDomain := domain.NewCommentDomain(mongoHandler)
+	userDomain := domain.NewUserDomain(postgresHandler)
 	server := server.NewServer()
-	server.QraphQLHandle(producerKafka)
+	server.QraphQLHandle(postDomain, commentDomain, userDomain)
 	server.Start()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)

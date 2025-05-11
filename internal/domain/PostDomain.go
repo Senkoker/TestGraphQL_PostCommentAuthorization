@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,12 +18,13 @@ type Domain struct {
 	StorageMongoDb  StorageMongoDBInterface
 }
 type StorageMongoDBInterface interface {
-	GetPostWithHashtag(hashtags []string, limit, offset int32) ([]*model.Post, []string, error)
+	GetPostWithHashtag(hashtags *string, limit, offset *int32) ([]*model.Post, []string, error)
 	GetPostWithID(postIDs []string) ([]*model.Post, []string, error)
+	StorageGetUserPosts(ctx context.Context, userID string, limit, offset int32) ([]*model.Post, error)
 }
 
 type StorageRedisInterface interface {
-	GetPostHashtagHash(hashtags []string, limit, offset int32) ([]*model.Post, error)
+	GetPostHashtagHash(hashtagsPointer *string, limit, offset *int32) ([]*model.Post, error)
 	GetPostHash(postIds []string) ([]*model.Post, []string, error)
 	CreatePopularPostHash(posts []*model.Post) error
 }
@@ -128,7 +130,7 @@ func (d *Domain) FeedGetPosts(interestPostIds []string) ([]*model.Post, error) {
 	return posts, nil
 }
 
-func (d *Domain) FeedGetPostsWithHashtag(hashtags []string, limit, offset int32, redisStatus string) ([]*model.Post, error) {
+func (d *Domain) FeedGetPostsWithHashtag(hashtags *string, limit, offset *int32, redisStatus string) ([]*model.Post, error) {
 	op := "Domain GetPosts"
 	logger := logger.GetLogger().With("op", op)
 	if redisStatus == "true" {
@@ -157,4 +159,15 @@ func (d *Domain) FeedGetPostsWithHashtag(hashtags []string, limit, offset int32,
 		postHashtags[i].ImgPersonURL = info.ImgUrl
 	}
 	return postHashtags, nil
+}
+
+func (d *Domain) GetUserPosts(ctx context.Context, userID string, limit, offset int32) ([]*model.Post, error) {
+	op := "GetUserPosts"
+	loggerUserPosts := logger.GetLogger().With(op)
+	posts, err := d.StorageMongoDb.StorageGetUserPosts(ctx, userID, limit, offset)
+	if err != nil {
+		loggerUserPosts.Error("Problem get posts", "err", err.Error())
+		return nil, err
+	}
+	return posts, nil
 }

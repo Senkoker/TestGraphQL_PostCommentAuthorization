@@ -7,12 +7,11 @@ package runtime
 import (
 	"context"
 	"friend_graphql/graph/model"
-	"friend_graphql/internal/server"
 )
 
 // Create is the resolver for the create field.
 func (r *postMutationResolver) Create(ctx context.Context, obj *model.PostMutation, input model.NewPost) (model.PostCreateResult, error) {
-	userID, err := server.AuthorizationCheck(ctx)
+	userID, err := AuthorizationCheck(ctx)
 	if err != nil {
 		return model.UnauthorizedError{Message: err.Error()}, nil
 	}

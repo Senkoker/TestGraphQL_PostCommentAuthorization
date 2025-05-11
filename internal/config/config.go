@@ -2,8 +2,8 @@ package config
 
 import (
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 	"log"
-	"time"
 )
 
 type Cfg struct {
@@ -11,6 +11,12 @@ type Cfg struct {
 	Logger    LoggerDebug
 	AmazonS3  AmazonS3
 	Redis     Redis
+	Postgres  PostgresInfo
+	Mongo     MongoInfo
+}
+
+type PostgresInfo struct {
+	Url string `env:"PG_URL"`
 }
 type KafkaInfo struct {
 	KafkaAddresses string `env:"KAFKA_ADDRESSES"`
@@ -22,14 +28,16 @@ type LoggerDebug struct {
 	Debug bool `env:"LoggerDebug"`
 }
 
+type MongoInfo struct {
+	URL            string `env:"MONGO_URL"`
+	Database       string `env:"MONGO_DATABASE"`
+	CollectionName string `env:"MONGO_COLLECTION_NAME"`
+}
+
 type Redis struct {
-	Address      string        `env:"REDIS_ADDRESS" env-default:""`
-	Password     string        `env:"REDIS_PASSWORD" env-default:""`
-	DB           int           `env:"REDIS_DB"`
-	CtxTime      time.Duration `env:"REDIS_CTX" env-default:"5s"`
-	DialTimeout  time.Duration `env:"REDIS_DIAL_TIMEOUT" env-default:""`
-	ReadTimeout  time.Duration `env:"REDIS_READ_TIMEOUT" env-default:""`
-	WriteTimeout time.Duration `env:"REDIS_WRITE_TIMEOUT" env-default:""`
+	Address  string `env:"REDIS_ADDRESS" env-default:""`
+	Password string `env:"REDIS_PASSWORD" env-default:""`
+	DB       int    `env:"REDIS_DB"`
 }
 type AmazonS3 struct {
 	AccessKey    string `env:"SELECTEL_ACCESS_KEY" env-default:""`
@@ -42,7 +50,11 @@ type AmazonS3 struct {
 
 func NewConfig() *Cfg {
 	cfg := new(Cfg)
-	err := cleanenv.ReadEnv(cfg)
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	err = cleanenv.ReadEnv(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

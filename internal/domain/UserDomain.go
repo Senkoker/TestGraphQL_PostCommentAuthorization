@@ -16,7 +16,7 @@ func NewUserDomain(postgres PostgresGetUserInfoInterface) *UserDomain {
 
 type PostgresGetUserInfoInterface interface {
 	StorageGetUserInfoById(userID string, ctx context.Context) (*model.User, error)
-	StorageGetUserFriend(user *model.User, ctx context.Context) error
+	StorageGetUserFriendIDs(user *model.User, ctx context.Context) error
 	StorageGetUserFriendsAndSubscribers(userObj *model.User, ctx context.Context, limit, offset int32, friendStatus bool) ([]*model.User, error)
 }
 
@@ -29,7 +29,7 @@ func (u *UserDomain) GetUserInfo(userID string) (*model.User, error) {
 		userLogger.Error("Error getting user info", "error", err.Error())
 		return nil, err
 	}
-	err = u.StoragePostgres.StorageGetUserFriend(user, ctx)
+	err = u.StoragePostgres.StorageGetUserFriendIDs(user, ctx)
 	if err != nil {
 		userLogger.Error("Error getting user friend", "error", err.Error())
 		return nil, err
@@ -48,7 +48,7 @@ func (u *UserDomain) GetUserFriendSubscriber(user *model.User, ctx context.Conte
 		return nil, err
 	}
 	for _, friend := range friends {
-		err = u.StoragePostgres.StorageGetUserFriend(friend, ctx)
+		err = u.StoragePostgres.StorageGetUserFriendIDs(friend, ctx)
 		if err != nil {
 			friendSubscriberLogger.Error("Error getting user friend", "error", err.Error())
 			continue

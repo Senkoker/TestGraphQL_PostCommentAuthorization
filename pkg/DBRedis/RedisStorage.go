@@ -3,6 +3,7 @@ package DBRedis
 import (
 	"context"
 	"friend_graphql/internal/config"
+	"friend_graphql/internal/logger"
 	"github.com/redis/go-redis/v9"
 	"log"
 	"time"
@@ -14,12 +15,9 @@ type RedisStorage struct {
 
 func NewRedis(cfg *config.Cfg) *RedisStorage {
 	redisStorage := redis.NewClient(&redis.Options{
-		Addr:         cfg.Redis.Address,
-		Password:     cfg.Redis.Password,
-		DB:           cfg.Redis.DB,
-		DialTimeout:  cfg.Redis.DialTimeout,
-		ReadTimeout:  cfg.Redis.ReadTimeout,
-		WriteTimeout: cfg.Redis.WriteTimeout,
+		Addr:     cfg.Redis.Address,
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
 	})
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	_, err := redisStorage.Ping(ctx).Result()

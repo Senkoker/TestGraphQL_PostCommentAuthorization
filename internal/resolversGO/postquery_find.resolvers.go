@@ -8,8 +8,6 @@ import (
 	"context"
 	"fmt"
 	"friend_graphql/graph/model"
-	"friend_graphql/internal/server"
-	"strings"
 )
 
 func PointerConvert(slicerPointer []*string) []string {
@@ -22,18 +20,23 @@ func PointerConvert(slicerPointer []*string) []string {
 
 // Find is the resolver for the find field.
 func (r *postQueryResolver) Find(ctx context.Context, obj *model.PostQuery, filter *model.PostFilter) (model.PostDataResult, error) {
-	_, err := server.AuthorizationCheck(ctx)
+	_, err := AuthorizationCheck(ctx)
 	if err != nil {
+		fmt.Println(err)
 		return model.UnauthorizedError{Message: err.Error()}, nil
 	}
+	if filter.Data.ID == nil {
+		posts, err := r.PostDomain.FeedGetPostsWithHashtag(filter.Data.Hashtags, &filter.Limit, &filter.Offset, "false")
+		if err != nil {
+			return model.InternalErrorProblem{Message: err.Error()}, nil
+		}
+		return model.PostFindOk{Posts: posts}, nil
+	}
 	postID := PointerConvert(filter.Data.ID)
-	fmt.Println(postID)
-	hashtags := strings.Split(*filter.Data.Hashtags, "#")
-	//Todo: дописать директиву чтобы можно было доставать данные
-	//posts,err:=r.PostCommentDomain.FeedGetPosts(postID)
-	//if err!=nil{
-	//	return model.InternalErrorProblem{Message: err.Error()}, nil
-	//}
-	posts, err := r.PostDomain.FeedGetPostsWithHashtag(hashtags, filter.Limit, filter.Offset, "")
+	posts, err := r.PostDomain.FeedGetPosts(postID)
+	if err != nil {
+		return model.InternalErrorProblem{Message: err.Error()}, nil
+	}
 	return model.PostFindOk{Posts: posts}, nil
+
 }

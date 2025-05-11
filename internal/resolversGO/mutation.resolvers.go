@@ -6,18 +6,17 @@ package runtime
 
 import (
 	"context"
-	"fmt"
 	"friend_graphql/graph/model"
 )
 
 // Comment is the resolver for the comment field.
 func (r *mutationResolver) Comment(ctx context.Context) (*model.CommentMutation, error) {
-	panic(fmt.Errorf("not implemented: Comment - comment"))
+	return &model.CommentMutation{}, nil
 }
 
 // Post is the resolver for the post field.
 func (r *mutationResolver) Post(ctx context.Context) (*model.PostMutation, error) {
-	panic(fmt.Errorf("not implemented: Post - post"))
+	return &model.PostMutation{}, nil
 }
 
 // CommentMutation returns CommentMutationResolver implementation.

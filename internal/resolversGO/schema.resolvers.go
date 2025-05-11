@@ -21,7 +21,6 @@ func (r *commentResolver) CommentChild(ctx context.Context, obj *model.Comment, 
 
 // Comments is the resolver for the comments field.
 func (r *postResolver) Comments(ctx context.Context, obj *model.Post, limit *int32, offset *int32) ([]*model.Comment, error) {
-	//Todo: подумать о проверке авторизации
 	postID := obj.PostID
 	comments, err := r.CommentDomain.GetComment(postID, *limit, *offset)
 	if err != nil {
@@ -41,7 +40,7 @@ func (r *userResolver) Friends(ctx context.Context, obj *model.User, limit *int3
 
 // Subscribes is the resolver for the subscribes field.
 func (r *userResolver) Subscribes(ctx context.Context, obj *model.User, limit *int32, offset *int32) ([]*model.User, error) {
-	subscribers, err := r.UserDomain.GetUserFriendSubscriber(obj, ctx, *limit, *offset, true)
+	subscribers, err := r.UserDomain.GetUserFriendSubscriber(obj, ctx, *limit, *offset, false)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +50,11 @@ func (r *userResolver) Subscribes(ctx context.Context, obj *model.User, limit *i
 // Posts is the resolver for the posts field.
 func (r *userResolver) Posts(ctx context.Context, obj *model.User, limit *int32, offset *int32) ([]*model.Post, error) {
 	//Todo: по id user
+	posts, err := r.PostDomain.GetUserPosts(ctx, obj.ID, *limit, *offset)
+	if err != nil {
+		return nil, err
+	}
+	return posts, nil
 }
 
 // Comment returns CommentResolver implementation.

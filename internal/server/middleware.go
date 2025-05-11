@@ -1,11 +1,13 @@
 package server
 
 import (
+	"bytes"
 	"context"
-	"errors"
+	"friend_graphql/internal/logger"
+	"io"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
-	"net/http"
 )
 
 const (
@@ -20,7 +22,10 @@ func AuthorizationMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 			return []byte(secret), nil
 		})
 		if err != nil || !token.Valid {
-			return echo.NewHTTPError(http.StatusUnauthorized, "token is invalid")
+			userID := ""
+			ctx := context.WithValue(c.Request().Context(), "userID", userID)
+			c.Request().WithContext(ctx)
+			return next(c)
 		}
 		var userID string
 		tokenClaims := token.Claims.(jwt.MapClaims)
@@ -30,10 +35,22 @@ func AuthorizationMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 		return next(c)
 	}
 }
-func AuthorizationCheck(ctx context.Context) (string, error) {
-	userID, ok := ctx.Value("userID").(string)
-	if !ok {
-		return "", errors.New("Unauthorized")
+
+func RequestMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		body, err := io.ReadAll(c.Request().Body)
+		if err != nil {
+			logger.GetLogger().Error(err.Error())
+			return err
+		}
+
+		if len(body) > 0 {
+			logger.GetLogger().Info(string(body))
+		}
+
+		// Восстанавливаем тело запроса
+		c.Request().Body = io.NopCloser(bytes.NewBuffer(body))
+
+		return next(c)
 	}
-	return userID, nil
 }

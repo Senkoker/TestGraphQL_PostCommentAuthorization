@@ -2,7 +2,10 @@ package server
 
 import (
 	"context"
-	"friend_graphql/graph"
+	"github.com/labstack/echo/v4/middleware"
+
+	runtime "friend_graphql/internal/resolversGO"
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -22,14 +25,20 @@ func NewServer() *Server {
 	return &Server{router: e}
 }
 
-func (s *Server) QraphQLHandle(producer graph.ProducerKafkaInterface) {
-	s.router.Use()
-	s.router.Use()
-
-	srv := handler.New(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
+func (s *Server) QraphQLHandle(postDomain runtime.PostDomainInterface, commentDomain runtime.CommentDomainInterface,
+	userDomain runtime.UserDomainInterface) {
+	s.router.Use(middleware.RequestID())
+	s.router.Use(RequestMiddleware)
+	s.router.Use(middleware.Logger())
+	config := runtime.Config{Resolvers: &runtime.Resolver{PostDomain: postDomain,
+		CommentDomain: commentDomain, UserDomain: userDomain}}
+	config.Directives.InputUnion = func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error) {
+		return runtime.InputUnionDirective(ctx, obj, next)
+	}
+	srv := handler.New(runtime.NewExecutableSchema(config))
 
 	srv.AddTransport(transport.Options{})
-
+	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
 
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
@@ -40,7 +49,7 @@ func (s *Server) QraphQLHandle(producer graph.ProducerKafkaInterface) {
 	})
 
 	s.router.GET("/", echo.WrapHandler(playground.Handler("GraphQL playground", "/query")))
-	s.router.GET("/query", echo.WrapHandler(srv))
+	s.router.POST("/query", echo.WrapHandler(srv))
 }
 
 func (s *Server) Start() {
