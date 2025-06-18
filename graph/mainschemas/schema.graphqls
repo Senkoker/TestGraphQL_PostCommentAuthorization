@@ -9,11 +9,15 @@ type Post {
     authorID: String!
     tagIDS: [String]
     content: String!
-    createdAt: String
-    watched: Int
-    likes: Int
-    comments(limit: Int, offset: Int):[Comment] @goField(forceResolver: true)
+    createdAt: String!
+    watched: Int!
+    likes: Int!
+    comments(limit: Int!, offset: Int!):PostCommentResult! @goField(forceResolver: true)
 }
+type CommentOK{
+    comments: [Comment]
+}
+union PostCommentResult = InternalErrorProblem | CommentOK
 
 type Comment {
     commentID: ID!

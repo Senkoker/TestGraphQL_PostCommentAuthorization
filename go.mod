@@ -11,7 +11,9 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/joho/godotenv v1.5.1
+	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.13.3
+	github.com/olahol/melody v1.3.0
 	github.com/redis/go-redis/v9 v9.8.0
 	github.com/vektah/gqlparser/v2 v2.5.25
 	go.mongodb.org/mongo-driver v1.17.3

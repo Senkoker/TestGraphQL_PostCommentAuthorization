@@ -1,15 +1,17 @@
 package AmazonS3
 
 import (
+	"fmt"
 	"friend_graphql/internal/config"
+	"log"
+	"strings"
+
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/google/uuid"
-	"log"
-	"strings"
 )
 
 type AmazonS3 struct {
@@ -34,6 +36,7 @@ func (s *AmazonS3) UploadFile(file graphql.Upload) (string, error) {
 	namePerm := strings.Split(file.Filename, ".")[1]
 	img := file.File
 	id := uuid.New().String()
+	fmt.Println(namePerm)
 	objectKey := "photos" + "/" + id + "." + namePerm
 	_, err := s3manager.NewUploader(s.session).Upload(&s3manager.UploadInput{
 		Bucket: aws.String(s.bucketName),
@@ -44,7 +47,5 @@ func (s *AmazonS3) UploadFile(file graphql.Upload) (string, error) {
 		return "", err
 	}
 	objectKey = s.domainServer + "/" + objectKey
-
 	return objectKey, nil
-
 }

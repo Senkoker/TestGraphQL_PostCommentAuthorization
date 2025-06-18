@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+
 	"github.com/labstack/echo/v4/middleware"
 
 	runtime "friend_graphql/internal/resolversGO"
-	"github.com/99designs/gqlgen/graphql"
+	"time"
+
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/lru"
@@ -13,7 +15,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/labstack/echo/v4"
 	"github.com/vektah/gqlparser/v2/ast"
-	"time"
 )
 
 type Server struct {
@@ -28,17 +29,18 @@ func NewServer() *Server {
 func (s *Server) QraphQLHandle(postDomain runtime.PostDomainInterface, commentDomain runtime.CommentDomainInterface,
 	userDomain runtime.UserDomainInterface) {
 	s.router.Use(middleware.RequestID())
+	s.router.Use(AuthorizationMiddleWare)
 	s.router.Use(middleware.Logger())
 	config := runtime.Config{Resolvers: &runtime.Resolver{PostDomain: postDomain,
 		CommentDomain: commentDomain, UserDomain: userDomain}}
-	config.Directives.InputUnion = func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error) {
-		return runtime.InputUnionDirective(ctx, obj, next)
-	}
+	config.Directives.InputUnion = runtime.NewInputUnionDirective()
 	srv := handler.New(runtime.NewExecutableSchema(config))
 
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.MultipartForm{})
+	srv.AddTransport(transport.Websocket{})
 
 	srv.SetQueryCache(lru.New[*ast.QueryDocument](1000))
 
@@ -53,7 +55,7 @@ func (s *Server) QraphQLHandle(postDomain runtime.PostDomainInterface, commentDo
 
 func (s *Server) Start() {
 	go func() {
-		s.router.Start("localhost:8080")
+		s.router.Start("localhost:8085")
 	}()
 }
 

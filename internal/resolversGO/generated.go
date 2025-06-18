@@ -567,6 +567,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputNewComment,
 		ec.unmarshalInputNewPost,
 		ec.unmarshalInputPostFilter,
+		ec.unmarshalInputPostHashtagData,
+		ec.unmarshalInputPostIDData,
 		ec.unmarshalInputPostIDHashtagData,
 		ec.unmarshalInputUserID,
 	)
@@ -780,24 +782,30 @@ union PostCreateResult =
 scalar Upload
 `, BuiltIn: false},
 	{Name: "../../graph/post/postquery_find.graphqls", Input: `extend type PostQuery {
-    find(
-        filter:PostFilter
-    ):PostDataResult! @goField(forceResolver: true)
+  find(filter: PostFilter): PostDataResult! @goField(forceResolver: true)
 }
 
-input PostFilter{
-    limit: Int!
-    offset: Int!
-    data: PostIDHashtagData! @inputUnion
-
+input PostFilter {
+  limit: Int!
+  offset: Int!
+  data: PostIDHashtagData! @inputUnion
 }
+
 input PostIDHashtagData {
-    hashtags: String
-    id:[String]
+  hashtags: PostHashtagData
+  id: PostIDData
+}
+
+input PostHashtagData {
+  value: String!
+}
+
+input PostIDData {
+  value: [String]!
 }
 
 type PostFindOK {
-    posts:[Post]
+  posts: [Post]
 }
 
 union PostDataResult = InternalErrorProblem | PostFindOK | UnauthorizedError
@@ -5685,6 +5693,60 @@ func (ec *executionContext) unmarshalInputPostFilter(ctx context.Context, obj an
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPostHashtagData(ctx context.Context, obj any) (model.PostHashtagData, error) {
+	var it model.PostHashtagData
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"value"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPostIDData(ctx context.Context, obj any) (model.PostIDData, error) {
+	var it model.PostIDData
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"value"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "value":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("value"))
+			data, err := ec.unmarshalNString2ᚕᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Value = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPostIDHashtagData(ctx context.Context, obj any) (model.PostIDHashtagData, error) {
 	var it model.PostIDHashtagData
 	asMap := map[string]any{}
@@ -5701,14 +5763,14 @@ func (ec *executionContext) unmarshalInputPostIDHashtagData(ctx context.Context,
 		switch k {
 		case "hashtags":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("hashtags"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOPostHashtagData2ᚖfriend_graphqlᚋgraphᚋmodelᚐPostHashtagData(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.Hashtags = data
 		case "id":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			data, err := ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			data, err := ec.unmarshalOPostIDData2ᚖfriend_graphqlᚋgraphᚋmodelᚐPostIDData(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -7370,6 +7432,30 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) unmarshalNString2ᚕᚖstring(ctx context.Context, v any) ([]*string, error) {
+	var vSlice []any
+	vSlice = graphql.CoerceList(v)
+	var err error
+	res := make([]*string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (graphql.Upload, error) {
 	res, err := graphql.UnmarshalUpload(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7820,6 +7906,22 @@ func (ec *executionContext) unmarshalOPostFilter2ᚖfriend_graphqlᚋgraphᚋmod
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputPostFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOPostHashtagData2ᚖfriend_graphqlᚋgraphᚋmodelᚐPostHashtagData(ctx context.Context, v any) (*model.PostHashtagData, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPostHashtagData(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOPostIDData2ᚖfriend_graphqlᚋgraphᚋmodelᚐPostIDData(ctx context.Context, v any) (*model.PostIDData, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPostIDData(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

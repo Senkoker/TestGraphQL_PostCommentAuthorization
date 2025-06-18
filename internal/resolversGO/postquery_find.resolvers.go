@@ -10,12 +10,14 @@ import (
 	"friend_graphql/graph/model"
 )
 
-func PointerConvert(slicerPointer []*string) []string {
-	postID := make([]string, 0, len(slicerPointer))
-	for _, id := range slicerPointer {
-		postID = append(postID, *id)
+func PointerConvert(pointer []*string) []string {
+	var result []string
+	for _, p := range pointer {
+		if *p != "" {
+			result = append(result, *p)
+		}
 	}
-	return postID
+	return result
 }
 
 // Find is the resolver for the find field.
@@ -26,17 +28,33 @@ func (r *postQueryResolver) Find(ctx context.Context, obj *model.PostQuery, filt
 		return model.UnauthorizedError{Message: err.Error()}, nil
 	}
 	if filter.Data.ID == nil {
-		posts, err := r.PostDomain.FeedGetPostsWithHashtag(filter.Data.Hashtags, &filter.Limit, &filter.Offset, "false")
+		posts, err := r.PostDomain.FeedGetPostsWithHashtag(&filter.Data.Hashtags.Value, &filter.Limit, &filter.Offset, "false")
 		if err != nil {
 			return model.InternalErrorProblem{Message: err.Error()}, nil
 		}
 		return model.PostFindOk{Posts: posts}, nil
 	}
-	postID := PointerConvert(filter.Data.ID)
-	posts, err := r.PostDomain.FeedGetPosts(postID)
+	postIDs := PointerConvert(filter.Data.ID.Value)
+	fmt.Println("postIDs: ", postIDs)
+	posts, err := r.PostDomain.FeedGetPosts(postIDs)
 	if err != nil {
 		return model.InternalErrorProblem{Message: err.Error()}, nil
 	}
 	return model.PostFindOk{Posts: posts}, nil
-
 }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+/*
+	func PointerConvert(slicerPointer []*string) []string {
+	postID := make([]string, 0, len(slicerPointer))
+	for _, id := range slicerPointer {
+		postID = append(postID, *id)
+	}
+	return postID
+}
+*/

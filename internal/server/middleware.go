@@ -2,11 +2,11 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"friend_graphql/internal/logger"
-	"io"
-
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
+	"io"
 )
 
 const (
@@ -16,6 +16,22 @@ const (
 func AuthorizationMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		authorization := c.Request().Header.Get("Authorization")
+		fmt.Println(authorization, "Токен")
+		if authorization == "" {
+			userID := ""
+			ctx := context.WithValue(c.Request().Context(), "userID", userID)
+			c.SetRequest(c.Request().WithContext(ctx))
+			return next(c)
+		}
+
+		// Безопасная проверка префикса Bearer
+		if len(authorization) < 7 || authorization[:7] != "Bearer " {
+			userID := ""
+			ctx := context.WithValue(c.Request().Context(), "userID", userID)
+			c.SetRequest(c.Request().WithContext(ctx))
+			return next(c)
+		}
+
 		tokenString := authorization[7:]
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return []byte(secret), nil
@@ -23,14 +39,16 @@ func AuthorizationMiddleWare(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil || !token.Valid {
 			userID := ""
 			ctx := context.WithValue(c.Request().Context(), "userID", userID)
-			c.Request().WithContext(ctx)
+			c.SetRequest(c.Request().WithContext(ctx))
 			return next(c)
 		}
 		var userID string
 		tokenClaims := token.Claims.(jwt.MapClaims)
-		userID = tokenClaims["userID"].(string)
+		userID = tokenClaims["user.id"].(string)
+		fmt.Println(userID, "ID user")
 		ctx := context.WithValue(c.Request().Context(), "userID", userID)
-		c.Request().WithContext(ctx)
+		c.SetRequest(c.Request().WithContext(ctx))
+		c.Request()
 		return next(c)
 	}
 }

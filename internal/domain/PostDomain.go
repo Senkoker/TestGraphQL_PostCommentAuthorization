@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"friend_graphql/graph/model"
 	"friend_graphql/internal/logger"
+
 	"github.com/99designs/gqlgen/graphql"
 )
 
@@ -18,8 +19,8 @@ type Domain struct {
 	StorageMongoDb  StorageMongoDBInterface
 }
 type StorageMongoDBInterface interface {
-	GetPostWithHashtag(hashtags *string, limit, offset *int32) ([]*model.Post, []string, error)
-	GetPostWithID(postIDs []string) ([]*model.Post, []string, error)
+	StorageGetPostWithHashtag(hashtags *string, limit, offset *int32) ([]*model.Post, []string, error)
+	StorageGetPostWithID(postIDs []string) ([]*model.Post, []string, error)
 	StorageGetUserPosts(ctx context.Context, userID string, limit, offset int32) ([]*model.Post, error)
 }
 
@@ -41,8 +42,15 @@ type StoragePostgresInterface interface {
 	GetUserInfo(users []string) (map[string]model.UserInfo, error)
 }
 
-func NewPostDomain(storageRedis StorageRedisInterface, storagePostgres StoragePostgresInterface) *Domain {
-	return &Domain{StorageRedis: storageRedis, StoragePostgres: storagePostgres}
+func NewPostDomain(storageRedis StorageRedisInterface, storagePostgres StoragePostgresInterface,
+	amazon AmazonS3Interface, producer ProducerKafkaInterface, mongo StorageMongoDBInterface) *Domain {
+	return &Domain{
+		StorageRedis:    storageRedis,
+		StoragePostgres: storagePostgres,
+		AmazonS3:        amazon,
+		Producer:        producer,
+		StorageMongoDb:  mongo,
+	}
 }
 
 func (d *Domain) UploadPostKafka(input *model.NewPost, userID string) (string, error) {
@@ -90,13 +98,13 @@ func (d *Domain) FeedGetPosts(interestPostIds []string) ([]*model.Post, error) {
 	posts, postIds, redisErr := d.StorageRedis.GetPostHash(interestPostIds)
 	if redisErr != nil {
 		postLogger.Error("Problem get post hash", "err", redisErr)
-
 	}
 	interestPostIds = subtractSlices(interestPostIds, postIds)
+	fmt.Println("проверка", len(interestPostIds))
 	var popularPost []*model.Post
 	var userInfo map[string]model.UserInfo
-	if interestPostIds != nil {
-		mongoPosts, users, err := d.StorageMongoDb.GetPostWithID(interestPostIds)
+	if len(interestPostIds) != 0 {
+		mongoPosts, users, err := d.StorageMongoDb.StorageGetPostWithID(interestPostIds)
 		users = uniqueSlice(users)
 		if err != nil && redisErr != nil {
 			postLogger.Error("Redis error", "err", redisErr)
@@ -127,6 +135,7 @@ func (d *Domain) FeedGetPosts(interestPostIds []string) ([]*model.Post, error) {
 		}
 		posts = append(posts, mongoPosts...)
 	}
+	fmt.Println("посты после обработки", posts)
 	return posts, nil
 }
 
@@ -138,7 +147,7 @@ func (d *Domain) FeedGetPostsWithHashtag(hashtags *string, limit, offset *int32,
 		return postWithHashtagsRedis, err
 	}
 
-	postHashtags, users, err := d.StorageMongoDb.GetPostWithHashtag(hashtags, limit, offset)
+	postHashtags, users, err := d.StorageMongoDb.StorageGetPostWithHashtag(hashtags, limit, offset)
 	if err != nil {
 		if errors.Is(err, errors.New("DoesNotExist")) {
 			logger.Error("Problem get Post with hashtags", "err", err.Error())

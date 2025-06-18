@@ -72,9 +72,8 @@ type NewComment struct {
 }
 
 type NewPost struct {
-	PostID string `json:"postID"`
-	AuthorID 	string `json:"authorID"`
-	ImgUrl string `json:"imgUrl"`
+	AuthorID string `json:"authorID"`
+	ImgUrl string `json:"imageURL"`
 	Hashtags  string         `json:"hashtags"`
 	Content   string         `json:"content"`
 	File      graphql.Upload `json:"file"`
@@ -82,7 +81,7 @@ type NewPost struct {
 }
 
 type Post struct {
-	PostID       string     `json:"postID" bson:"_id"`
+	PostID       string     `json:"postID"`
 	ImgPersonURL string     `json:"imgPersonUrl"`
 	Author       string     `json:"Author"`
 	AuthorID     string     `json:"authorID"`
@@ -112,9 +111,17 @@ type PostFindOk struct {
 
 func (PostFindOk) IsPostDataResult() {}
 
+type PostHashtagData struct {
+	Value string `json:"value"`
+}
+
+type PostIDData struct {
+	Value []*string `json:"value"`
+}
+
 type PostIDHashtagData struct {
-	Hashtags *string   `json:"hashtags,omitempty"`
-	ID       []*string `json:"id,omitempty"`
+	Hashtags *PostHashtagData `json:"hashtags,omitempty"`
+	ID       *PostIDData      `json:"id,omitempty"`
 }
 
 type PostMutation struct {
@@ -142,5 +149,3 @@ func (UnauthorizedError) IsPostCreateResult() {}
 func (UnauthorizedError) IsPostDataResult() {}
 
 func (UnauthorizedError) IsUserFindResult() {}
-
-

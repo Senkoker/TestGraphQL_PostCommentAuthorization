@@ -1,6 +1,7 @@
 package app
 
 import (
+	"friend_graphql/internal/AmazonS3"
 	MongoDB2 "friend_graphql/internal/MongoDB"
 	"friend_graphql/internal/PostgresHandler"
 	producer "friend_graphql/internal/ProducerKafka"
@@ -33,7 +34,9 @@ func App() {
 
 	producerKafka := producer.NewProducer(cfg)
 
-	postDomain := domain.NewPostDomain(redisHandler, postgresHandler)
+	amazonS3 := AmazonS3.NewS3(cfg)
+
+	postDomain := domain.NewPostDomain(redisHandler, postgresHandler, amazonS3, producerKafka, mongoHandler)
 	commentDomain := domain.NewCommentDomain(mongoHandler)
 	userDomain := domain.NewUserDomain(postgresHandler)
 	server := server.NewServer()
